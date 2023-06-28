@@ -162,6 +162,7 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
 
 
     //WriteAll
+    /*
     private Behavior<Command> onUpdatePiece(UpdatePiece cmd) {
         replicatorAdapter.askUpdate(
                 askReplyTo ->
@@ -175,6 +176,7 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
         Log.log("onUpdatePiece executed");
         return this;
     }
+    */
 
     /*
     private Behavior<Command> onUpdatePiece(UpdatePiece cmd) {
@@ -195,7 +197,7 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
         return this;
     }  */
     //writeLocal
-    /*
+
     private Behavior<Command> onUpdatePiece(UpdatePiece cmd) {
         replicatorAdapter.askUpdate(
                 askReplyTo ->
@@ -209,7 +211,7 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
 
         return this;
     }
-*/
+
     /*
     private Behavior<Command> onGetPiece(GetPiece cmd) {
         replicatorAdapter.askGet(
@@ -218,6 +220,7 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
         return this;
     }*/
 
+    /*
     //readAll
     private Behavior<Command> onGetMap(GetMap cmd) {
         replicatorAdapter.askGet(
@@ -227,9 +230,10 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
         Log.log("onGetMap executed");
         return this;
     }
+    */
 
     //readLocal
-    /*
+
     private Behavior<Command> onGetMap(GetMap cmd) {
 
         replicatorAdapter.askGet(
@@ -239,7 +243,7 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
         Log.log("onGetMap executed");
         return this;
     }
-    */
+
 
     /*
     private Behavior<Command> onGetCachedPiece(GetCachedPiece cmd) {
