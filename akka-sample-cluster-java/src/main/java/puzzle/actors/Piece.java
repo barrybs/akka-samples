@@ -6,13 +6,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.Serializable;
 
-public class Tile implements Serializable, Comparable<Tile> {
+public class Piece implements Serializable, Comparable<Piece> {
     private final Integer originalPosition;
     private Integer currentPosition;
-    private ImageIcon imageIcon;
 
-    public Tile(ImageIcon imageIcon, Integer originalPosition, Integer currentPosition) {
-        this.imageIcon = imageIcon;
+    public Piece(Integer originalPosition, Integer currentPosition) {
         this.originalPosition = originalPosition;
         this.currentPosition = currentPosition;
     }
@@ -29,24 +27,8 @@ public class Tile implements Serializable, Comparable<Tile> {
         this.currentPosition = currentPosition;
     }
 
-    public ImageIcon getImageIcon() {
-        return imageIcon;
-    }
-
-    public void setImageIcon(ImageIcon imageIcon) {
-        this.imageIcon = imageIcon;
-    }
-
-    public Image getImage() {
-        return this.imageIcon.getImage();
-    }
-
-    public void setImage(Image image) {
-        this.imageIcon = new ImageIcon(image);
-    }
-
     @Override
-    public int compareTo(Tile other) {
+    public int compareTo(Piece other) {
         return this.currentPosition < other.currentPosition ? -1
                 : (this.currentPosition == other.currentPosition ? 0 : 1);
     }

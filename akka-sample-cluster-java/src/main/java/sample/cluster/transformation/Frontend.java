@@ -57,7 +57,6 @@ public class Frontend extends AbstractBehavior<Frontend.Event> {
         context.messageAdapter(Receptionist.Listing.class, listing ->
           new WorkersUpdated(listing.getServiceInstances(Worker.WORKER_SERVICE_KEY)));
     context.getSystem().receptionist().tell(Receptionist.subscribe(Worker.WORKER_SERVICE_KEY, subscriptionAdapter));
-
     timers.startTimerWithFixedDelay(Tick.INSTANCE, Tick.INSTANCE, Duration.ofSeconds(2));
   }
 

@@ -5,27 +5,46 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import puzzle.utils.Log;
 
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * 
- * Simple Puzzle Game - Centralized version.
+ * Simple Puzzle Game - Distributed version.
  * 
- * By A. Croatti 
+ * By Barry Bassi
  * 
- * @author acroatti
+ * @author barry.bassi
  *
  */
 public class Application {
 
 	public static void main(final String[] args) {
-		final String imagePath = "src/main/java/puzzle/actors/bletchley-park-mansion.jpg";
+		//src/main/java/pcd/ass03/puzzle/bletchley-park-mansion.jpg
 
+		//final String imagePath = "src/main/java/puzzle/bletchley-park-mansion.jpg";
+		final String imagePath = "bletchley-park-mansion.jpg";
+
+		final BufferedImage image;
+		try {
+			image = ImageIO.read(new File(imagePath));
+		} catch (IOException ex) {
+			System.out.println("Could not load image. Exception: "+ex);
+			return;
+		}
 		if (args.length == 0) {
-			startupWithRole("distributeddata",25251);
+			Log.log(startupWithRole("distributeddata", image, 25251).toString());
+			Log.log(startupWithRole("gamerwithgui", image, 25252).toString());
+
 			//startup(25252);
 			//startup(0);
 			//} else
@@ -36,15 +55,15 @@ public class Application {
         //puzzle.setVisible(true);
 	}
 
-	private static Behavior<Void> rootBehavior(Integer rows, Integer cols) {
+	private static Behavior<Void> rootBehavior(Integer rows, Integer cols, BufferedImage image) {
 		return Behaviors.setup(context -> {
 			// Create an actor that handles cluster domain events
-			context.spawn(MainActor.create(rows, cols), "MainActor");
+			context.spawn(MainActor.create(rows, cols, image), "MainActor");
 
 			return Behaviors.empty();
 		});
 	}
-	private static ActorSystem<Void> startup(int port) {
+	private static ActorSystem<Void> startup(int port, BufferedImage image) {
 		// Override the configuration of the port
 		// Override the configuration of the port
 		Map<String, Object> overrides = new HashMap<>();
@@ -54,10 +73,10 @@ public class Application {
 				.withFallback(ConfigFactory.load());
 
 		// Create an Akka system
-		return ActorSystem.create(rootBehavior(3,4), "ClusterSystem", config);
+		return ActorSystem.create(rootBehavior(3,4, image), "ClusterSystem", config);
 	}
 
-	private static ActorSystem<Void> startupWithRole(String role, int port) {
+	private static ActorSystem<Void> startupWithRole(String role, BufferedImage image, int port) {
 		// Override the configuration of the port
 		// Override the configuration of the port
 		Map<String, Object> overrides = new HashMap<>();
@@ -70,7 +89,7 @@ public class Application {
 				.withFallback(ConfigFactory.load());
 
 		// Create an Akka system
-		return ActorSystem.create(rootBehavior(3,4), "ClusterSystem", config);
+		return ActorSystem.create(rootBehavior(3,4, image), "ClusterSystem", config);
 	}
 
 }

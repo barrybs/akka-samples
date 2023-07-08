@@ -1,17 +1,23 @@
 package puzzle.actors;
 
-public class SelectionManager {
+import akka.actor.typed.ActorRef;
+import puzzle.messages.Command;
+import puzzle.messages.SwapMsg;
 
+public class SelectionManager {
 	private boolean selectionActive = false;
 	private Tile selectedTile;
+	private ActorRef<Command> playerActor;
 
+	public SelectionManager (ActorRef<Command> playerActor){
+		this.selectionActive = false;
+		this.playerActor = playerActor;
+	}
 	public void selectTile(final Tile tile, final Listener listener) {
-		
 		if(selectionActive) {
 			selectionActive = false;
-			
 			swap(selectedTile, tile);
-			
+			playerActor.tell((new SwapMsg(selectedTile, tile)));
 			listener.onSwapPerformed();
 		} else {
 			selectionActive = true;
@@ -24,9 +30,11 @@ public class SelectionManager {
 		t1.setCurrentPosition(t2.getCurrentPosition());
 		t2.setCurrentPosition(pos);
 	}
-	
+
 	@FunctionalInterface
 	interface Listener{
 		void onSwapPerformed();
 	}
 }
+
+

@@ -1,5 +1,9 @@
 package puzzle.actors;
 
+import akka.actor.typed.ActorRef;
+import puzzle.messages.Command;
+import puzzle.messages.GetViewMsg;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -11,70 +15,53 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
-@SuppressWarnings("serial")
 public class PuzzleBoard extends JFrame {
-	
 	final int rows, columns;
-	private List<Tile> tiles = new ArrayList<>();
+    final JPanel board;
+    final ActorRef<Command> playerActor;
 	
-	private SelectionManager selectionManager = new SelectionManager();
+	private SelectionManager selectionManager;
+
 	
-    public PuzzleBoard(final int rows, final int columns, final String imagePath) {
+    public PuzzleBoard(final int rows, final int columns, ActorRef<Command> playerActor) {
     	this.rows = rows;
 		this.columns = columns;
-    	
+        this.playerActor = playerActor;
+
+        selectionManager = new SelectionManager(playerActor);
     	setTitle("Puzzle");
         setResizable(false);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
-        final JPanel board = new JPanel();
-        board.setBorder(BorderFactory.createLineBorder(Color.gray));
-        board.setLayout(new GridLayout(rows, columns, 0, 0));
+        this.board = new JPanel();
+        this.board.setBorder(BorderFactory.createLineBorder(Color.gray));
+        this.board.setLayout(new GridLayout(rows, columns, 0, 0));
         getContentPane().add(board, BorderLayout.CENTER);
-        
-        createTiles(imagePath);
-        paintPuzzle(board);
+        //createTiles(imagePath, puzzleMap);
+        //paintPuzzle(board);
     }
 
-    
-    private void createTiles(final String imagePath) {
-		final BufferedImage image;
-        
-        try {
-            image = ImageIO.read(new File(imagePath));
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "Could not load image", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
+    public void paintPuzzle(BufferedImage image, Integer rows, Integer cols, List<Piece> pieces) {
+    	board.removeAll();
+        List<Tile> tiles = new ArrayList<>();
         final int imageWidth = image.getWidth(null);
         final int imageHeight = image.getHeight(null);
-
-        int position = 0;
-        
-        final List<Integer> randomPositions = new ArrayList<>();
-        IntStream.range(0, rows*columns).forEach(item -> { randomPositions.add(item); }); 
-        Collections.shuffle(randomPositions);
-        
+        Integer position = 0;
         for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < columns; j++) {
-            	final Image imagePortion = createImage(new FilteredImageSource(image.getSource(),
-                        new CropImageFilter(j * imageWidth / columns, 
-                        					i * imageHeight / rows, 
-                        					(imageWidth / columns), 
-                        					imageHeight / rows)));
-
-                tiles.add(new Tile(imagePortion, position, randomPositions.get(position)));
+           for (int j = 0; j < cols; j++) {
+            final Image imagePortion = Toolkit.getDefaultToolkit().createImage(new FilteredImageSource(image.getSource(),
+                new CropImageFilter(j * imageWidth / cols,
+                                i * imageHeight / rows,
+                                (imageWidth / cols),
+                                imageHeight / rows)));
+                Tile tile = new Tile(new ImageIcon(imagePortion), pieces.get(position).getOriginalPosition(), pieces.get(position).getCurrentPosition());
+                tiles.add(tile);
                 position++;
             }
         }
-	}
-    
-    private void paintPuzzle(final JPanel board) {
-    	board.removeAll();
-    	
+
     	Collections.sort(tiles);
     	
     	tiles.forEach(tile -> {
@@ -83,8 +70,8 @@ public class PuzzleBoard extends JFrame {
             btn.setBorder(BorderFactory.createLineBorder(Color.gray));
             btn.addActionListener(actionListener -> {
             	selectionManager.selectTile(tile, () -> {
-            		paintPuzzle(board);
-                	checkSolution();
+            		paintPuzzle(image, rows, cols, pieces);
+                	//checkSolution();
             	});
             });
     	});
@@ -93,9 +80,15 @@ public class PuzzleBoard extends JFrame {
         setLocationRelativeTo(null);
     }
 
-    private void checkSolution() {
-    	if(tiles.stream().allMatch(Tile::isInRightPlace)) {
-    		JOptionPane.showMessageDialog(this, "Puzzle Completed!", "", JOptionPane.INFORMATION_MESSAGE);
-    	}
+    public void sendViewToPlayer(){
+        playerActor.tell(new GetViewMsg(this));
     }
+    public void display() {
+        SwingUtilities.invokeLater(() -> {
+            this.setVisible(true);
+        }); //GUI started...but might not actually be started (invokeLater())
+        //Sending ViewFrame reference to the ViewActor for next updates
+
+    }
+
 }

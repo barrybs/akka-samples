@@ -9,8 +9,8 @@ import java.awt.event.MouseEvent;
 public class TileButton extends JButton{
 
 	public TileButton(final Tile tile) {
-		super(new ImageIcon(tile.getImage()));
-		
+		super(tile.getImageIcon());
+
 		addMouseListener(new MouseAdapter() {            
             @Override
             public void mouseClicked(MouseEvent e) {
