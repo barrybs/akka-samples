@@ -2,19 +2,13 @@ package puzzle.actors;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
-import akka.actor.typed.javadsl.AbstractBehavior;
-import akka.actor.typed.javadsl.ActorContext;
-import akka.actor.typed.javadsl.Behaviors;
-import akka.actor.typed.javadsl.Receive;
+import akka.actor.typed.javadsl.*;
 import akka.actor.typed.receptionist.Receptionist;
-import akka.actor.typed.receptionist.ServiceKey;
 import puzzle.messages.*;
 import puzzle.utils.Log;
-import sample.cluster.transformation.Frontend;
-import sample.cluster.transformation.Worker;
-
 import javax.swing.*;
 import java.awt.image.BufferedImage;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,9 +18,11 @@ public final class PlayerActor extends AbstractBehavior<Command> {
     private final Boolean isGuiOn;
     private PuzzleBoard puzzleBoard;
     private Optional<ActorRef<Command>> puzzleDD;
-    private BufferedImage image;
-    private Integer rows;
-    private Integer cols;
+    private final BufferedImage image;
+    private final Integer rows;
+    private final Integer cols;
+    private final TimerScheduler<Command> timers;
+
 
 
     public static final class ListingResponse implements Command {
@@ -36,12 +32,19 @@ public final class PlayerActor extends AbstractBehavior<Command> {
         }
     }
 
-    public PlayerActor(ActorContext<Command> context, BufferedImage image, Integer rows, Integer cols, Boolean isGuiOn) {
+    public static final class UpdateTimer implements Command {
+        public static final UpdateTimer INSTANCE = new UpdateTimer();
+
+        private UpdateTimer() {}
+    }
+
+    public PlayerActor(TimerScheduler<Command> timers, ActorContext<Command> context, BufferedImage image, Integer rows, Integer cols, Boolean isGuiOn) {
         super(context);
         this.isGuiOn = isGuiOn;
         this.image = image;
         this.rows = rows;
         this.cols = cols;
+        this.timers = timers;
         //Getting puzzle data from PuzzleLWWMap (Distributed Data)
         Log.log("getContext().getSelf(): "+getContext().getSelf());
         ActorRef<Receptionist.Listing> subscribeResponseAdapter =
@@ -50,7 +53,11 @@ public final class PlayerActor extends AbstractBehavior<Command> {
         //this.puzzleDD.tell(new GetMapMsg(getContext().getSelf()));
     }
     public static Behavior<Command> create(BufferedImage image, Integer rows, Integer cols, Boolean guiOn) {
-        return Behaviors.setup(ctx -> new PlayerActor(ctx, image, rows, cols, guiOn));
+       // return Behaviors.setup(ctx -> new PlayerActor(ctx, image, rows, cols, guiOn));
+        return Behaviors.withTimers(timers -> {
+            timers.startTimerAtFixedRate(UpdateTimer.INSTANCE, Duration.ofSeconds(1)); // ogni 1 secondo
+            return Behaviors.setup(ctx -> new PlayerActor(timers, ctx, image, rows, cols, guiOn));
+        });
     }
     @Override
     public Receive<Command> createReceive() {
@@ -59,6 +66,7 @@ public final class PlayerActor extends AbstractBehavior<Command> {
                 .onMessage(SwapMsg.class, this::onSwapMsg)
                 .onMessage(GetViewMsg.class, this::onGetViewMsg)
                 .onMessage(ListingResponse.class, this::onListingResponse)
+                .onMessage(UpdateTimer.class, msg -> this.onUpdateTimer())
                 .build();
     }
 
@@ -123,6 +131,12 @@ public final class PlayerActor extends AbstractBehavior<Command> {
     }
 
 
+    private Behavior<Command> onUpdateTimer() {
+        if (puzzleDD.isPresent()) {
+            puzzleDD.get().tell(new GetMapMsg(getContext().getSelf()));
+        }
+        return this;
+    }
 
     private Behavior<Command> onGetViewMsg(GetViewMsg command) {
         this.puzzleBoard = command.getPuzzleBoard();

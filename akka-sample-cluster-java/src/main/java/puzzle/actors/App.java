@@ -102,6 +102,7 @@ public class App {
         if (args.length == 0) {
             startup("distributeddata", 25251);
             startup("gamerwithgui", 25252);
+            startup("gamerwithgui", 0);
            /* startup("frontend", 0);
             startup("frontend", 0);
             startup("frontend", 0);*/

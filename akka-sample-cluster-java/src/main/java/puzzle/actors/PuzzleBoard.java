@@ -61,9 +61,7 @@ public class PuzzleBoard extends JFrame {
                 position++;
             }
         }
-
     	Collections.sort(tiles);
-    	
     	tiles.forEach(tile -> {
     		final TileButton btn = new TileButton(tile);
             board.add(btn);
@@ -77,7 +75,7 @@ public class PuzzleBoard extends JFrame {
     	});
     	
     	pack();
-        setLocationRelativeTo(null);
+        //setLocationRelativeTo(null);
     }
 
     public void sendViewToPlayer(){

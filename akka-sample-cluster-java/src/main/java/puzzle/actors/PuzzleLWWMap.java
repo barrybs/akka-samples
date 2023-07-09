@@ -10,7 +10,6 @@ import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
 import akka.cluster.ddata.Key;
 import akka.cluster.ddata.LWWMap;
-import akka.cluster.ddata.LWWMapKey;
 import akka.cluster.ddata.SelfUniqueAddress;
 import akka.cluster.ddata.typed.javadsl.DistributedData;
 import akka.cluster.ddata.typed.javadsl.Replicator;
@@ -30,7 +29,7 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
     private final ReplicatorMessageAdapter<Command, LWWMap<String, Piece>> replicatorAdapter;
     private final SelfUniqueAddress node;
     private final Key<LWWMap<String, Piece>> key;
-    private Piece cachedPiece;
+
     private Map<String, Piece> cachedMap;
     public static ServiceKey<Command> PUZZLE_SERVICE_KEY = ServiceKey.create(Command.class, "puzzleService");
     private PuzzleLWWMap(
@@ -40,7 +39,7 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
 
         super(context);
         this.replicatorAdapter = replicatorAdapter;
-        this.key = LWWMapKey.create("puzzle");
+        this.key = key;
         this.node = DistributedData.get(context.getSystem()).selfUniqueAddress();
         this.replicatorAdapter.subscribe(this.key, InternalSubscribeResponse::new);
         //Registering this actor to Receptionist
@@ -62,38 +61,6 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
             this.piece = piece;
         }
     }
-    /*
-    public static class GetPiece implements Command {
-        public final String key;
-        public final ActorRef<Piece> replyTo;
-
-        public GetPiece(String key, ActorRef<Piece> replyTo) {
-            this.key = key;Command
-            this.replyTo = replyTo;
-        }
-    }
-    */
-    /*
-    public class GetMap implements Command {
-        public final ActorRef<PuzzleMsg> replyTo;
-
-        public GetMap(ActorRef<PuzzleMsg> replyTo) {
-            this.replyTo = replyTo;
-        }
-    }
-    */
-    /*
-    public static class GetCachedPiece implements Command {
-        public final String key;
-        public final ActorRef<Piece> replyTo;
-
-        public GetCachedPiece(String key, ActorRef<Piece> replyTo) {
-            this.key = key;
-            this.replyTo = replyTo;
-        }
-    }
-    */
-
     public static class GetCachedMap implements Command {
         public final ActorRef<Command> replyTo;
 
@@ -116,19 +83,6 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
             this.rsp = rsp;
         }
     }
-/*
-    private static class InternalGetResponse implements InternalCommand {
-        final Replicator.GetResponse<Piece> rsp;
-        final ActorRef<Piece> replyTo;
-        final String key;
-
-        InternalGetResponse(Replicator.GetResponse<Piece> rsp, String key, ActorRef<Piece> replyTo) {
-            this.rsp = rsp;
-            this.replyTo = replyTo;
-            this.key = key;
-        }
-    }
-*/
     private static class InternalGetMapResponse implements InternalCommand {
         final Replicator.GetResponse<LWWMap<String, Piece>> rsp;
         final ActorRef<Command> replyTo;
@@ -147,16 +101,6 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
             this.rsp = rsp;
         }
     }
-/*
-    public static Behavior<Command> create(Key<LWWMap<String, Piece>> key) {
-        return Behaviors.setup(
-                ctx ->
-                        DistributedData.withReplicatorMessageAdapter(
-                                (ReplicatorMessageAdapter<Command, LWWMap<String, Piece>> replicatorAdapter) ->
-                                    new PuzzleLWWMap(ctx, replicatorAdapter, key)));
-    }
-*/
-
     public static Behavior<Command> create(Key<LWWMap<String, Piece>> key) {
         return Behaviors.setup(
                 ctx -> {
@@ -170,7 +114,6 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
                                     new PuzzleLWWMap(ctx, replicatorAdapter, key));
                 });
     }
-
 
     @Override
     public Receive<Command> createReceive() {
@@ -188,77 +131,18 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
                 .build();
     }
 
-
-    //WriteAll
-    /*
     private Behavior<Command> onUpdatePiece(UpdatePiece cmd) {
         replicatorAdapter.askUpdate(
                 askReplyTo ->
                         new Replicator.Update<>(
                                 key,
                                 LWWMap.empty(),
-                                writeAll,
+                                writeMajority,
                                 askReplyTo,
                                 curr -> curr.put(node, cmd.key, cmd.piece)),
                 InternalUpdateResponse::new);
-        Log.log("onUpdatePiece executed");
         return this;
     }
-    */
-
-    /*
-    private Behavior<Command> onUpdatePiece(UpdatePiece cmd) {
-
-        replicatorAdapter.askUpdate(
-                askReplyTo -> new Replicator.Update<LWWMap<String,Piece>>(key, LWWMap.<String, Piece>empty(), askReplyTo, curr -> curr.put(node, cmd.key, cmd.piece)),
-                InternalUpdateResponse::new);
-
-     */
-
-        /*
-        replicatorAdapter.askUpdate(
-                askReplyTo ->
-                        new Replicator.WriteAll<>(key, LWWMap.<String, Piece>empty(), askReplyTo, curr -> curr.put(node, cmd.key, cmd.piece))
-                ,
-                InternalUpdateResponse::new);
-
-        return this;
-    }  */
-    //writeLocal
-
-    private Behavior<Command> onUpdatePiece(UpdatePiece cmd) {
-        replicatorAdapter.askUpdate(
-                askReplyTo ->
-                        new Replicator.Update<>(
-                                key,
-                                LWWMap.empty(),
-                                Replicator.writeLocal(),
-                                askReplyTo,
-                                curr -> curr.put(node, cmd.key, cmd.piece)),
-                InternalUpdateResponse::new);
-
-        return this;
-    }
-
-    /*
-    private Behavior<Command> onGetPiece(GetPiece cmd) {
-        replicatorAdapter.askGet(
-                askReplyTo -> new Replicator.Get<>(key, Replicator.readLocal(), askReplyTo),
-                rsp -> new InternalGetResponse(rsp, cmd.key, cmd.replyTo));
-        return this;
-    }*/
-
-/*
-    //readAll
-    private Behavior<Command> onGetMap(GetMapMsg cmd) {
-        replicatorAdapter.askGet(
-                askReplyTo -> new Replicator.Get<>(key, readAll, askReplyTo),
-                rsp -> new InternalGetMapResponse(rsp, cmd.replyTo));
-
-        Log.log("onGetMap executed");
-        return this;
-    }
-*/
 
     //readLocal
     private Behavior<Command> onGetMap(GetMapMsg cmd) {
@@ -269,12 +153,6 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
         return this;
     }
 
-    /*
-    private Behavior<Command> onGetCachedPiece(GetCachedPiece cmd) {
-        cmd.replyTo.tell(cachedPiece);
-        return this;
-    }
-    */
     private Behavior<Command> onGetCachedMap(GetCachedMap cmd) {
         cmd.replyTo.tell(new GetAllMsg(cachedMap));
         return this;
@@ -284,19 +162,6 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
         replicatorAdapter.unsubscribe(key);
         return this;
     }
-
-    /*
-    private Behavior<Command> onInternalGetResponse(InternalGetResponse msg) {
-        if (msg.rsp instanceof Replicator.GetSuccess) {
-            Piece value = ((Replicator.GetSuccess<?>) msg.rsp).get(key).get(msg.key);
-            msg.replyTo.tell(value);
-            return this;
-        } else {
-            // not dealing with failures
-            return Behaviors.unhandled();
-        }
-    }
-    */
 
     private Behavior<Command> onInternalGetMapResponse(InternalGetMapResponse msg) {
         if (msg.rsp instanceof Replicator.GetSuccess) {
@@ -319,7 +184,7 @@ public class PuzzleLWWMap extends AbstractBehavior<Command> {
 
     private Behavior<Command> onInternalSubscribeResponse(InternalSubscribeResponse msg) {
         if (msg.rsp instanceof Replicator.Changed) {
-            LWWMap map = ((Replicator.Changed<?>) msg.rsp).get(key);
+            LWWMap<String, Piece> map = ((Replicator.Changed<?>) msg.rsp).get(key);
             cachedMap = map.getEntries();
             return this;
         } else {
