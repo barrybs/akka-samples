@@ -43,9 +43,10 @@ public class PuzzleBoard extends JFrame {
         //paintPuzzle(board);
     }
 
-    public void paintPuzzle(BufferedImage image, Integer rows, Integer cols, List<Piece> pieces) {
+    public void paintPuzzle(BufferedImage image, Integer rows, Integer cols, Map<String, Piece> puzzleMap) {
     	board.removeAll();
         List<Tile> tiles = new ArrayList<>();
+
         final int imageWidth = image.getWidth(null);
         final int imageHeight = image.getHeight(null);
         Integer position = 0;
@@ -56,7 +57,8 @@ public class PuzzleBoard extends JFrame {
                                 i * imageHeight / rows,
                                 (imageWidth / cols),
                                 imageHeight / rows)));
-                Tile tile = new Tile(new ImageIcon(imagePortion), pieces.get(position).getOriginalPosition(), pieces.get(position).getCurrentPosition());
+                //Log("paintPuzzle() - position: "+position+", i: "+i+", j: "+j+" "+)
+                Tile tile = new Tile(new ImageIcon(imagePortion), position, puzzleMap.get(position.toString()).getCurrentPosition());
                 tiles.add(tile);
                 position++;
             }
@@ -68,7 +70,7 @@ public class PuzzleBoard extends JFrame {
             btn.setBorder(BorderFactory.createLineBorder(Color.gray));
             btn.addActionListener(actionListener -> {
             	selectionManager.selectTile(tile, () -> {
-            		paintPuzzle(image, rows, cols, pieces);
+            		paintPuzzle(image, rows, cols, puzzleMap);
                 	//checkSolution();
             	});
             });

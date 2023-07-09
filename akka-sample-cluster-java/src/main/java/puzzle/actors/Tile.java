@@ -6,7 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.Serializable;
 
-public class Tile implements Serializable, Comparable<Tile> {
+public class Tile implements Comparable<Tile> {
     private final Integer originalPosition;
     private Integer currentPosition;
     private ImageIcon imageIcon;

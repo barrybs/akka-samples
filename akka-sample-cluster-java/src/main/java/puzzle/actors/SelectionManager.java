@@ -3,6 +3,7 @@ package puzzle.actors;
 import akka.actor.typed.ActorRef;
 import puzzle.messages.Command;
 import puzzle.messages.SwapMsg;
+import puzzle.utils.Log;
 
 public class SelectionManager {
 	private boolean selectionActive = false;
@@ -16,7 +17,8 @@ public class SelectionManager {
 	public void selectTile(final Tile tile, final Listener listener) {
 		if(selectionActive) {
 			selectionActive = false;
-			swap(selectedTile, tile);
+			//swap(selectedTile, tile);
+			Log.log("");
 			playerActor.tell((new SwapMsg(selectedTile, tile)));
 			listener.onSwapPerformed();
 		} else {

@@ -29,11 +29,15 @@ public class Piece implements Serializable, Comparable<Piece> {
 
     @Override
     public int compareTo(Piece other) {
-        return this.currentPosition < other.currentPosition ? -1
+        /*return this.currentPosition < other.currentPosition ? -1
                 : (this.currentPosition == other.currentPosition ? 0 : 1);
+
+        */
+        return this.originalPosition < other.originalPosition ? -1
+                : (this.originalPosition == other.originalPosition ? 0 : 1);
     }
     public boolean isInRightPlace() {
-        if (currentPosition == originalPosition && currentPosition != null && originalPosition != null) {
+        if (currentPosition.equals(originalPosition) && currentPosition != null && originalPosition != null) {
             Log.log("isInRightPlace - originalPosition: " + originalPosition + " - " + "currentPosition: " + currentPosition);
             return true;
         }
